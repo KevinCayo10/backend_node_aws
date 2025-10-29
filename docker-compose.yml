@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: b2b_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: db_store
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  customers-api:
+    build:
+      context: ./customer-api
+    container_name: customers_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: 12345
+      DB_NAME: db_store
+      DB_PORT: 3306
+      JWT_SECRET: dev-secret
+      SERVICE_TOKEN: 1234567890
+    ports:
+      - "3001:3001"
+    command: ["npm", "run", "start"]
+
+  orders-api:
+    build:
+      context: ./orders-api
+    container_name: orders_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3002
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: 12345
+      DB_NAME: db_store
+      DB_PORT: 3306
+      JWT_SECRET: dev-secret
+      SERVICE_TOKEN: 1234567890
+      CUSTOMER_API_URL: http://customers-api:3001/api/v1
+    ports:
+      - "3002:3002"
+    command: ["npm", "run", "start"]
+
+volumes:
+  db_data:
+
+
