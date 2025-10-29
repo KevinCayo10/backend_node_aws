@@ -1,0 +1,39 @@
+{
+  "name": "backend_node_aws",
+  "version": "1.0.0",
+  "description": "Backend nodejs with aws",
+  "keywords": [
+    "nodejs"
+  ],
+  "homepage": "https://github.com/KevinCayo10/backend_node_aws#readme",
+  "bugs": {
+    "url": "https://github.com/KevinCayo10/backend_node_aws/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KevinCayo10/backend_node_aws.git"
+  },
+  "license": "ISC",
+  "author": "Kevin Cayo",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "build": "echo 'No build script defined'",
+    "start": "node src/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.18.0",
+    "axios": "^1.13.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.15.3",
+    "prisma": "^6.18.0",
+    "zod": "^4.1.12"
+  }
+}
