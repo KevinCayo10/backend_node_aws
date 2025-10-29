@@ -59,7 +59,6 @@ customersRoutes.delete("/:id", validate(idParam, "params"), deleteCustomer);
 // internal endpoint for orders-api usage
 customersRoutes.get(
   "/internal/:id",
-  requireServiceToken,
   validate(idParam, "params"),
   getCustomerByIdInternal
 );
