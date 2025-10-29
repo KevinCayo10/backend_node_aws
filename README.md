@@ -1,19 +1,19 @@
-## Backend B2B - Monorepo
+## Backend B2B — Monorepo
 
-Sistema mínimo con dos APIs (Customers, Orders), base MySQL y un Lambda Orchestrator.
+Un proyecto simple para probar un flujo B2B: dos APIs (Customers y Orders), una base MySQL y un Lambda que orquesta la creación y confirmación de órdenes.
 
-### Estructura
+### Qué hay adentro
 - `customer-api/`: API de clientes (puerto 3001)
 - `orders-api/`: API de productos y órdenes (puerto 3002)
-- `lambda-orchestrator/`: Lambda HTTP que orquesta crear+confirmar orden
-- `db/`: SQL de esquema y datos de ejemplo (`schema.sql`, `seed.sql`)
-- `docker-compose.yml`: levanta MySQL + APIs
+- `lambda-orchestrator/`: Lambda HTTP que crea y confirma órdenes
+- `db/`: SQL con tablas y datos de ejemplo (`schema.sql`, `seed.sql`)
+- `docker-compose.yml`: orquesta MySQL + APIs
 
-### Requisitos
+### Qué necesitas
 - Docker y Docker Compose
-- Node.js 20.x para desarrollo local
+- Node.js 20.x (si querés correr servicios fuera de Docker)
 
-### Variables de entorno (referencia)
+### Variables de entorno (de referencia)
 - Customers API
   - `PORT=3001`
   - `DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT`
@@ -24,45 +24,45 @@ Sistema mínimo con dos APIs (Customers, Orders), base MySQL y un Lambda Orchest
   - `DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT`
   - `JWT_SECRET=dev-secret`
   - `SERVICE_TOKEN=1234567890`
-  - `CUSTOMER_API_URL=http://customers-api:3001/api/v1` (en Docker)
-- Lambda Orchestrator (local serverless-offline)
+  - `CUSTOMER_API_URL=http://customers-api:3001/api/v1` (dentro de Docker)
+- Lambda Orchestrator (local con serverless-offline)
   - `CUSTOMERS_API_BASE=http://127.0.0.1:3001/api/v1`
   - `ORDERS_API_BASE=http://127.0.0.1:3002/api/v1`
   - `SERVICE_TOKEN=1234567890`
 
-### Levantar con Docker Compose
-1) Desde la raíz del repo:
+### Arranque con Docker Compose
+Desde la raíz del repo:
 ```bash
-docker-compose build
-docker-compose up -d
+docker compose build
+docker compose up -d
 ```
-2) Verificar salud:
+Chequeos rápidos:
 - Customers: `http://localhost:3001/api/v1/health`
 - Orders: `http://localhost:3002/api/v1/health`
 
-La base MySQL expone host `localhost:3308` (interno 3306) y se inicializa con `db/schema.sql` + `db/seed.sql`.
+MySQL queda expuesto en `localhost:3308` (interno 3306) y se carga con `db/schema.sql` + `db/seed.sql`.
 
 ### Endpoints principales
-- Customers API (prefijo `http://localhost:3001/api/v1`)
-  - `POST /customers` crear { name, email, phone }
+- Customers API (`http://localhost:3001/api/v1`)
+  - `POST /customers` crea { name, email, phone }
   - `GET /customers/:id`
   - `GET /customers?search=&cursor=&limit=`
   - `PUT /customers/:id`
   - `DELETE /customers/:id`
   - `GET /customers/internal/:id` requiere `Authorization: Bearer SERVICE_TOKEN`
 
-- Orders API (prefijo `http://localhost:3002/api/v1`)
+- Orders API (`http://localhost:3002/api/v1`)
   - Productos: `POST /products`, `PUT /products/:id`, `GET /products/:id`, `GET /products?search=&cursor=&limit=`
   - Órdenes:
     - `POST /orders` body `{ customerId, items:[{ productId, qty }] }`
     - `GET /orders/:id`
     - `GET /orders?status=&from=&to=&cursor=&limit=`
-    - `POST /orders/:id/confirm` con header `X-Idempotency-Key`
+    - `POST /orders/:id/confirm` con `X-Idempotency-Key`
     - `POST /orders/:id/cancel`
 
 ### Validación y seguridad
-- Validación con Zod en Customers, Orders y Products (params, query y body).
-- JWT simple (`Authorization: Bearer <jwt>`) para endpoints protegidos; token de servicio para endpoint interno de Customers.
+- Zod para validar params, query y body en las APIs.
+- JWT simple (`Authorization: Bearer <jwt>`) en endpoints protegidos; token de servicio para el endpoint interno de Customers.
 
 ### Probar con cURL
 - Crear cliente:
@@ -84,14 +84,14 @@ curl -X POST http://localhost:3002/api/v1/orders/1/confirm \
 ```
 
 ### Lambda Orchestrator (local)
-1) Instalar y levantar en `lambda-orchestrator/`:
+En `lambda-orchestrator/`:
 ```bash
 npm install
 npm run dev
 ```
-El orquestador expone `http://127.0.0.1:4000` y usa como backends las APIs locales.
+Queda expuesto en `http://127.0.0.1:4000` y apunta a las APIs locales.
 
-2) Invocar flujo completo (crear + confirmar):
+Flujo completo (crear + confirmar):
 ```bash
 curl --location 'http://127.0.0.1:4000/orchestrator/create-and-confirm-order' \
   --header 'Content-Type: application/json' \
@@ -103,16 +103,18 @@ curl --location 'http://127.0.0.1:4000/orchestrator/create-and-confirm-order' \
   }'
 ```
 
-### Troubleshooting
-- 404 Not Found al orquestar: asegúrate que el orquestador corre en `127.0.0.1:4000` y que `ORDERS_API_BASE/CUSTOMERS_API_BASE` apuntan a `127.0.0.1` (evita IPv6 y colisiones de puertos).
-- Proxy corporativo: exporta `NO_PROXY=localhost,127.0.0.1,::1` o usa cliente HTTP con `proxy: false` (ya aplicado en el orquestador).
+### Si algo no sale a la primera
+- ¿404 al orquestar? Suele ser un tema de puertos o de la URL base. El orquestador corre en `127.0.0.1:4000` y las APIs en `127.0.0.1:3001/3002`.
+- ¿Ambiente con proxy? Ayuda tener `NO_PROXY=localhost,127.0.0.1,::1`. El orquestador ya usa un cliente HTTP con `proxy: false`.
 
 ### OpenAPI
-- Se recomienda documentar cada servicio con OpenAPI 3.0 (archivo `openapi.yaml` por servicio). Pendiente de agregar.
+Cada servicio incluye un `openapi.yaml` y una UI en:
+- Customers: `http://localhost:3001/api/v1/docs`
+- Orders: `http://localhost:3002/api/v1/docs`
 
 ### Deploy (opcional)
-- Orquestador: Serverless Framework (`npm run deploy`) configurando `CUSTOMERS_API_BASE` y `ORDERS_API_BASE` públicos.
-- APIs: contenedores Docker o plataforma preferida, con mismas variables de entorno.
+- Orquestador con Serverless (`npm run deploy`). Para producción, las variables `CUSTOMERS_API_BASE` y `ORDERS_API_BASE` deberían apuntar a URLs públicas.
+- Las APIs pueden ir en contenedores o en tu plataforma preferida, reutilizando las mismas variables.
 
 ### Licencia
 MIT / ISC
