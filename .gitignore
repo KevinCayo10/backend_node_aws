@@ -1,0 +1,9 @@
+customer-api/node_modules
+customer-api/generated
+customer-api/prisma/migrations
+orders-api/node_modules
+orders-api/generated
+orders-api/prisma/migrations
+lambda-orchestrator/node_modules
+lambda-orchestrator/generated
+lambda-orchestrator/prisma/migrations
