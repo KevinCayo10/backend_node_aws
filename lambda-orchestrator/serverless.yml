@@ -1,0 +1,29 @@
+service: lambda-orchestrator
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: local
+  region: us-east-1
+  environment:
+    CUSTOMERS_API_BASE: http://127.0.0.1:3001/api/v1
+    ORDERS_API_BASE: http://127.0.0.1:3002/api/v1
+    SERVICE_TOKEN: 1234567890
+
+functions:
+  createAndConfirmOrder:
+    handler: handler.createAndConfirmOrder
+    events:
+      - http:
+          path: orchestrator/create-and-confirm-order
+          method: post
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    noPrependStageInUrl: true
+    httpPort: 4000
+    host: 127.0.0.1
