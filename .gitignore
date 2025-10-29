@@ -7,3 +7,7 @@ orders-api/prisma/migrations
 lambda-orchestrator/node_modules
 lambda-orchestrator/generated
 lambda-orchestrator/prisma/migrations
+
+customer-api/.env
+orders-api/.env
+lambda-orchestrator/.env
